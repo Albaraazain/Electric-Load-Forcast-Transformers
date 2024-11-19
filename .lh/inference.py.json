@@ -1,0 +1,22 @@
+{
+    "sourceFile": "inference.py",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 1,
+            "patches": [
+                {
+                    "date": 1732040105855,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                },
+                {
+                    "date": 1732040136364,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n@@ -21,10 +21,10 @@\n     )\r\n \r\n     # Create time interval for your sample data\r\n     sample_interval = TimeInterval(\r\n-        min_date=datetime.date(2024, 1, 1),  # Adjust these dates based on your sample data\r\n-        max_date=datetime.date(2024, 1, 7)\r\n+        min_date=datetime.date(2023, 1, 1),  # Adjust these dates based on your sample data\r\n+        max_date=datetime.date(2023, 1, 7)\r\n     )\r\n \r\n     # Get sample dataset\r\n     sample_df = loader.extract_dataframe_by_year_filter(sample_interval)\r\n"
+                }
+            ],
+            "date": 1732040105854,
+            "name": "Commit-0",
+            "content": "import torch\r\nimport pandas as pd\r\nimport datetime\r\nfrom pipeline import Pipeline, ModelType\r\nfrom data_loading.standard_dataset import StandardDataset\r\nfrom data_loading.time_series import TimeSeriesDataframeLoader, TimeInterval\r\n\r\ndef run_inference(model_path: str, sample_data_path: str):\r\n    # 1. Load the saved model\r\n    pipeline = Pipeline.load_from_file(model_path)\r\n\r\n    # 2. Load and prepare sample data\r\n    time_variable = 'utc_timestamp'\r\n    target_variable = 'DE_load_actual_entsoe_transparency'\r\n\r\n    # Load data\r\n    loader = TimeSeriesDataframeLoader(\r\n        path_to_csv=sample_data_path,\r\n        time_variable=time_variable,\r\n        target_variable=target_variable\r\n    )\r\n\r\n    # Create time interval for your sample data\r\n    sample_interval = TimeInterval(\r\n        min_date=datetime.date(2024, 1, 1),  # Adjust these dates based on your sample data\r\n        max_date=datetime.date(2024, 1, 7)\r\n    )\r\n\r\n    # Get sample dataset\r\n    sample_df = loader.extract_dataframe_by_year_filter(sample_interval)\r\n\r\n    # 3. Create dataset (using the same parameters as training)\r\n    sample_dataset = StandardDataset(\r\n        df=sample_df,\r\n        time_variable=time_variable,\r\n        target_variable=target_variable,\r\n        time_series_window_in_hours=168,  # Based on your training parameters\r\n        forecasting_horizon_in_hours=96,\r\n        is_single_time_point_prediction=False,\r\n        include_time_information=True,\r\n        time_series_scaler=pipeline.scaler,  # Use the same scaler as training\r\n        is_training_set=False,\r\n        one_hot_time_variables=False\r\n    )\r\n\r\n    # 4. Run inference\r\n    device = 'cuda' if torch.cuda.is_available() else 'cpu'\r\n    pipeline.model.to(device)\r\n    pipeline.model.eval()\r\n\r\n    with torch.no_grad():\r\n        for i in range(len(sample_dataset)):\r\n            input_data, _ = sample_dataset[i]\r\n            input_data = input_data.unsqueeze(0).to(device)\r\n            prediction = pipeline.model(input_data)\r\n\r\n            # Convert prediction back to original scale if scaler was used\r\n            if pipeline.scaler:\r\n                prediction = pipeline.scaler.inverse_transform(prediction.cpu().numpy())\r\n\r\n            print(f\"Prediction for timestep {i}:\")\r\n            print(prediction)\r\n\r\nif __name__ == \"__main__\":\r\n    model_path = \"SimpleNeuralNet2024_11_19_20_51_16_968366\"  # Your saved model\r\n    sample_data_path = \"path_to_your_sample_data.csv\"  # Your sample data CSV\r\n\r\n    run_inference(model_path, sample_data_path)"
+        }
+    ]
+}

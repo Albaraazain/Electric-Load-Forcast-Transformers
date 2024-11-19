@@ -1,0 +1,18 @@
+{
+    "sourceFile": "data_loading/time_features.py",
+    "activeCommit": 0,
+    "commits": [
+        {
+            "activePatchIndex": 0,
+            "patches": [
+                {
+                    "date": 1732040145718,
+                    "content": "Index: \n===================================================================\n--- \n+++ \n"
+                }
+            ],
+            "date": 1732040145718,
+            "name": "Commit-0",
+            "content": "import datetime\nimport math\nimport numpy as np\n\n\nDAY_IN_HOURS = 24\n\n\ndef generate_cyclical_time_value(time_value, period_length):\n    \"\"\"\n    Converts the given time_value to a cyclical value. Improves features with a cyclical behavior like hour-of-day or\n    day of week.\n\n    :param time_value: the value to transform\n    :param period_length: the length of the period (e.g. 23 for a hourly value)\n    :return: the cyclical feature\n    \"\"\"\n    return [\n        math.sin(2 * math.pi * time_value / period_length),\n        math.cos(2 * math.pi * time_value / period_length)\n    ]\n\n\ndef convert_datetime_to_hour_of_the_week(dt: datetime.datetime) -> int:\n    \"\"\"\n    Converts the given datetime to the hour of the week.\n\n    :param dt: the datetime to convert\n    :return: the hour of the week in the interval [0, 167]\n    \"\"\"\n    return datetime.datetime.weekday(dt) * DAY_IN_HOURS + dt.hour\n\n\ndef one_hot_encode(time_value, period_length):\n    encoding = np.zeros(period_length, dtype=int)\n    encoding[time_value] = 1\n    return encoding\n"
+        }
+    ]
+}
